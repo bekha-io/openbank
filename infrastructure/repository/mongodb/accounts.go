@@ -2,7 +2,6 @@ package mongodb
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/bekha-io/vaultonomy/domain/entities"
 	"github.com/bekha-io/vaultonomy/domain/repository"
@@ -86,7 +85,6 @@ func (r *MongoAccountRepository) GetManyBy(ctx context.Context, filters ...repos
 	for _, flt := range filters {
 		filter = append(filter, ParseFilter(flt))
 	}
-	slog.Info("query", "map", filter)
 
 	cur, err := r.cl.Database(r.dbName).Collection("accounts").Find(ctx, filter)
 	if err != nil {

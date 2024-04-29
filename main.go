@@ -8,10 +8,16 @@ import (
 	"github.com/bekha-io/vaultonomy/infrastructure/repository/mongodb"
 	"github.com/bekha-io/vaultonomy/presentation/rest/accounts"
 	"github.com/bekha-io/vaultonomy/presentation/rest/customers"
+	"github.com/bekha-io/vaultonomy/presentation/rest/loans"
 	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
+
+func init() {
+	decimal.MarshalJSONWithoutQuotes = true
+}
 
 func main() {
 	ctx := context.Background()
@@ -28,9 +34,11 @@ func main() {
 
 	accountsSvc := services.NewAccountsService(accountsRepo, transactionsRepo)
 	individualCustomersSvc := services.NewIndividualCustomerService(individualCustomersRepo, accountsRepo)
+	loansSvc := services.NewLoanService()
 
 	accountsController := accounts.NewAccountsController(accountsSvc)
 	customersController := customers.NewCustomerController(individualCustomersSvc)
+	loansController := loans.NewLoanController(loansSvc)
 
 	r := gin.Default()
 
@@ -50,7 +58,12 @@ func main() {
 			accountsGroup.POST("/:id/withdraw", accountsController.Withdraw)
 			accountsGroup.POST("/:id/deposit", accountsController.Deposit)
 		}
+
+		loansGroup := v1.Group("/loans")
+		{
+			loansGroup.POST("/calculate", loansController.AnnuitySchedule)
+		}
 	}
 
-	r.Run(":"+os.Getenv("APP_PORT"))
+	r.Run(":" + os.Getenv("APP_PORT"))
 }

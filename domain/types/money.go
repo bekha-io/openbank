@@ -7,6 +7,13 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+type PaymentType string
+
+const (
+	PaymentTypeCash   PaymentType = "cash"
+	PaymentTypeCashless PaymentType = "cashless"
+)
+
 type Money struct {
 	Amount   decimal.Decimal `json:"amount"`
 	Currency Currency        `json:"currency"`
