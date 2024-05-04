@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bekha-io/vaultonomy/domain/dto"
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/repository"
-	"github.com/bekha-io/vaultonomy/domain/types"
-	"github.com/bekha-io/vaultonomy/domain/types/errs"
+	"github.com/bekha-io/openbank/domain/dto"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/repository"
+	"github.com/bekha-io/openbank/domain/types"
+	"github.com/bekha-io/openbank/domain/types/errs"
 )
 
 var _ IIndividualCustomerService = (*IndividualCustomerService)(nil)
@@ -21,7 +21,7 @@ type IndividualCustomerService struct {
 func NewIndividualCustomerService(individualCustomerRepo repository.IIndividualCustomerRepository, accountsRepo repository.IAccountRepository) *IndividualCustomerService {
 	return &IndividualCustomerService{
 		IndividualCustomerRepo: individualCustomerRepo,
-		AccountsRepo: accountsRepo,
+		AccountsRepo:           accountsRepo,
 	}
 }
 

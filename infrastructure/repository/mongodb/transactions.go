@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/repository"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/repository"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/bson"

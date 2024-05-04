@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/bekha-io/vaultonomy/domain/types/errs"
+	"github.com/bekha-io/openbank/domain/types/errs"
 	"github.com/shopspring/decimal"
 )
 
@@ -9,7 +9,7 @@ type Currency string
 
 type CurrencyRate struct {
 	Currency Currency
-	Rates    map[Currency]decimal.Decimal  // each rate represents an amount of a given currency to 1 CurrencyRate.Currency
+	Rates    map[Currency]decimal.Decimal // each rate represents an amount of a given currency to 1 CurrencyRate.Currency
 }
 
 // Convert converts m.Currency to CurrencyRate.Currency based on CurrencyRate.Rates

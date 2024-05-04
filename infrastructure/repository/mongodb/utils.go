@@ -1,7 +1,7 @@
 package mongodb
 
 import (
-	"github.com/bekha-io/vaultonomy/domain/repository"
+	"github.com/bekha-io/openbank/domain/repository"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

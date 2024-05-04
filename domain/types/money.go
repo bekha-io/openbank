@@ -3,14 +3,14 @@ package types
 import (
 	"fmt"
 
-	"github.com/bekha-io/vaultonomy/domain/types/errs"
+	"github.com/bekha-io/openbank/domain/types/errs"
 	"github.com/shopspring/decimal"
 )
 
 type PaymentType string
 
 const (
-	PaymentTypeCash   PaymentType = "cash"
+	PaymentTypeCash     PaymentType = "cash"
 	PaymentTypeCashless PaymentType = "cashless"
 )
 

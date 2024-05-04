@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/google/uuid"
 )
 

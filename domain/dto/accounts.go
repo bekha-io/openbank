@@ -1,8 +1,8 @@
 package dto
 
 import (
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/types"
 )
 
 type CreateAccountCommand struct {

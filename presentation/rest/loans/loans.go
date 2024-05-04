@@ -1,6 +1,6 @@
 package loans
 
-import "github.com/bekha-io/vaultonomy/domain/services"
+import "github.com/bekha-io/openbank/domain/services"
 
 type LoanController struct {
 	LoanService services.ILoanService

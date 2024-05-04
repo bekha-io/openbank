@@ -3,9 +3,9 @@ package mongodb
 import (
 	"context"
 
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/repository"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/repository"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -14,10 +14,10 @@ import (
 
 type mongoIndividualCustomer struct {
 	ID          string `bson:"id"`
-	PhoneNumber string    `bson:"phone_number"`
-	FirstName   string    `bson:"first_name"`
-	LastName    string    `bson:"last_name"`
-	MiddleName  string    `bson:"middle_name"`
+	PhoneNumber string `bson:"phone_number"`
+	FirstName   string `bson:"first_name"`
+	LastName    string `bson:"last_name"`
+	MiddleName  string `bson:"middle_name"`
 }
 
 func (c *mongoIndividualCustomer) ParseEntity(e *entities.IndividualCustomer) {
@@ -74,7 +74,7 @@ func (r *MongoIndividualCustomerRepository) Save(ctx context.Context, customer *
 	c.ParseEntity(customer)
 
 	_, err := r.cl.Database(r.dbName).Collection("individual_customers").UpdateOne(ctx, bson.M{"id": customer.ID.String()},
-	 bson.D{{Key: "$set", Value: c}}, options.Update().SetUpsert(true))
+		bson.D{{Key: "$set", Value: c}}, options.Update().SetUpsert(true))
 	if err != nil {
 		return err
 	}

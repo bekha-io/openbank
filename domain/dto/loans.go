@@ -3,12 +3,12 @@ package dto
 import (
 	"time"
 
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/shopspring/decimal"
 )
 
 type CalculateAnnuityInstallmentsQuery struct {
-	LoanAmount types.Money
+	LoanAmount    types.Money
 	InterestRate  decimal.Decimal // annual interest rate
 	RepayStartsAt time.Time
 	Duration      uint

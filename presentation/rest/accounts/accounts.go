@@ -1,6 +1,6 @@
 package accounts
 
-import "github.com/bekha-io/vaultonomy/domain/services"
+import "github.com/bekha-io/openbank/domain/services"
 
 type AccountsController struct {
 	AccountsService services.IAccountService

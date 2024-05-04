@@ -3,8 +3,8 @@ package accounts
 import (
 	"net/http"
 
-	"github.com/bekha-io/vaultonomy/domain/dto"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/dto"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
 )

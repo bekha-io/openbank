@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/types"
 )
 
 // type Result[T any] struct {
@@ -14,7 +14,6 @@ import (
 // }
 
 // type NoRowResult = Result[any]  // NoRowResult means no rows (Result.Rows) should be expected
-
 
 type IAccountRepository interface {
 	GetByID(ctx context.Context, id types.AccountID) (*entities.Account, error)

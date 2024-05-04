@@ -7,4 +7,6 @@ type Filter struct {
 	GreaterThan interface{}
 	LessThan interface{}
 	Like interface{}
+	Before interface{}
+	After interface{}
 }

@@ -1,7 +1,7 @@
 package customers
 
 import (
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

@@ -1,4 +1,4 @@
-module github.com/bekha-io/vaultonomy
+module github.com/bekha-io/openbank
 
 go 1.21.3
 

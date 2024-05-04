@@ -3,9 +3,9 @@ package services
 import (
 	"context"
 
-	"github.com/bekha-io/vaultonomy/domain/dto"
-	"github.com/bekha-io/vaultonomy/domain/entities"
-	"github.com/bekha-io/vaultonomy/domain/types"
+	"github.com/bekha-io/openbank/domain/dto"
+	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/types"
 )
 
 type IIndividualCustomerService interface {
