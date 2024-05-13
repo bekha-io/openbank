@@ -104,3 +104,26 @@ func (r *MongoAccountRepository) GetManyBy(ctx context.Context, filters ...repos
 
 	return accounts, nil
 }
+
+// GetManyIdLike implements repository.IAccountRepository.
+func (r *MongoAccountRepository) GetManyIdLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error) {
+	pattern := ".*" + id + ".*"
+	cur, err := r.cl.Database(r.dbName).Collection("accounts").
+	Find(ctx, bson.M{"id": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
+	if err != nil {
+		return nil, err
+	}
+
+	var mongoAccounts []*mongoAccount
+	err = cur.All(ctx, &mongoAccounts)
+	if err != nil {
+		return nil, err
+	}
+
+	var accounts []*entities.Account
+	for _, mongoAcc := range mongoAccounts {
+		accounts = append(accounts, mongoAcc.ToEntity())
+	}
+
+	return accounts, nil
+}
