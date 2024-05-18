@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"time"
+
 	"github.com/bekha-io/openbank/domain/types"
 	"github.com/shopspring/decimal"
 )
@@ -11,6 +13,8 @@ type Account struct {
 	Balance    *types.Money     `json:"balance"`
 
 	TrustedCustomers []*Customer `json:"-"` // Customers that are allowed to access this account and perform operations
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
 func NewAccount(customerId types.CustomerID, currency types.Currency) *Account {
@@ -18,5 +22,7 @@ func NewAccount(customerId types.CustomerID, currency types.Currency) *Account {
 		ID:         types.NewAccountID(),
 		CustomerID: customerId,
 		Balance:    types.NewMoney(decimal.NewFromInt(0), currency),
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
 	}
 }

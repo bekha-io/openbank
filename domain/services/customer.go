@@ -12,7 +12,7 @@ type IIndividualCustomerService interface {
 	CreateCustomer(ctx context.Context, in dto.CreateIndividualCustomerCommand) error
 	GetCustomer(ctx context.Context, id types.CustomerID) (*entities.IndividualCustomer, error)
 	GetCustomerBy(ctx context.Context, key string, value interface{}) (*entities.IndividualCustomer, error)
-
+	SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error)
 	GetCustomerAccounts(ctx context.Context, customer entities.Customer) ([]*entities.Account, error)
 }
 

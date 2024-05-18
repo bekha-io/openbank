@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"time"
 
 	"github.com/bekha-io/openbank/domain/entities"
 	"github.com/bekha-io/openbank/domain/repository"
@@ -19,6 +20,8 @@ type mongoAccount struct {
 	CustomerID string               `bson:"customer_id"`
 	Balance    primitive.Decimal128 `bson:"balance"`
 	Currency   string               `bson:"currency"`
+	CreatedAt  time.Time            `bson:"created_at"`
+	UpdatedAt  time.Time            `bson:"updated_at"`
 }
 
 func (c *mongoAccount) ParseEntity(e *entities.Account) {
@@ -26,6 +29,8 @@ func (c *mongoAccount) ParseEntity(e *entities.Account) {
 	c.Balance, _ = primitive.ParseDecimal128(e.Balance.Amount.StringFixed(2))
 	c.Currency = string(e.Balance.Currency)
 	c.CustomerID = e.CustomerID.String()
+	c.CreatedAt = e.CreatedAt
+	c.UpdatedAt = e.UpdatedAt
 }
 
 func (c *mongoAccount) ToEntity() *entities.Account {
@@ -33,6 +38,8 @@ func (c *mongoAccount) ToEntity() *entities.Account {
 		ID:         types.AccountID(c.ID),
 		CustomerID: types.CustomerID(uuid.MustParse(c.CustomerID)),
 		Balance:    types.NewMoney(decimal.RequireFromString(c.Balance.String()), types.Currency(c.Currency)),
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
 	}
 }
 
@@ -109,7 +116,7 @@ func (r *MongoAccountRepository) GetManyBy(ctx context.Context, filters ...repos
 func (r *MongoAccountRepository) GetManyIdLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error) {
 	pattern := ".*" + id + ".*"
 	cur, err := r.cl.Database(r.dbName).Collection("accounts").
-	Find(ctx, bson.M{"id": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
+		Find(ctx, bson.M{"id": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
 	if err != nil {
 		return nil, err
 	}

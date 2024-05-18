@@ -42,6 +42,7 @@ func (c *mongoTransaction) ToEntity() *entities.Transaction {
 		TransactionType: types.TransactionType(c.TransactionType),
 		Amount:          types.NewMoney(decimal.RequireFromString(c.Amount.String()), types.Currency(c.Currency)),
 		Comment:         c.Comment,
+		CreatedAt: c.CreatedAt,
 	}
 }
 

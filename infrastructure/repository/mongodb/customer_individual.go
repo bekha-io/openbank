@@ -8,6 +8,7 @@ import (
 	"github.com/bekha-io/openbank/domain/types"
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -80,3 +81,49 @@ func (r *MongoIndividualCustomerRepository) Save(ctx context.Context, customer *
 	}
 	return nil
 }
+
+// GetManyIDLike implements repository.IIndividualCustomerRepository.
+func (r *MongoIndividualCustomerRepository) GetManyIDLike(ctx context.Context, id types.Currency) ([]*entities.IndividualCustomer, error) {
+	pattern := ".*" + id + ".*"
+	cur, err := r.cl.Database(r.dbName).Collection("individual_customers").
+		Find(ctx, bson.M{"id": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
+	if err != nil {
+		return nil, err
+	}
+
+	var mongoCustomers []*mongoIndividualCustomer
+	err = cur.All(ctx, &mongoCustomers)
+	if err != nil {
+		return nil, err
+	}
+
+	var customers []*entities.IndividualCustomer
+	for _, mongoAcc := range mongoCustomers {
+		customers = append(customers, mongoAcc.ToEntity())
+	}
+
+	return customers, nil
+}
+
+func (r *MongoIndividualCustomerRepository) GetManyPhoneNumberLike(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error) {
+	pattern := ".*" + phoneNumber + ".*"
+	cur, err := r.cl.Database(r.dbName).Collection("individual_customers").
+		Find(ctx, bson.M{"phone_number": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
+	if err != nil {
+		return nil, err
+	}
+
+	var mongoCustomers []*mongoIndividualCustomer
+	err = cur.All(ctx, &mongoCustomers)
+	if err != nil {
+		return nil, err
+	}
+
+	var customers []*entities.IndividualCustomer
+	for _, mongoAcc := range mongoCustomers {
+		customers = append(customers, mongoAcc.ToEntity())
+	}
+
+	return customers, nil
+}
+

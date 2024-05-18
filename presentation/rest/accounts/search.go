@@ -15,7 +15,7 @@ func (ctrl *AccountsController) SearchAccounts(c *gin.Context) {
 		return
 	}
 
-	accounts, err := ctrl.AccountsService.SearchAccounts(c, types.AccountID(id))
+	accounts, err := ctrl.AccountsService.GetAccountsLike(c, types.AccountID(id))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

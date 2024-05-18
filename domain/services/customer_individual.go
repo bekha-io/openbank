@@ -64,3 +64,8 @@ func (s *IndividualCustomerService) GetCustomerAccounts(ctx context.Context, cus
 	}
 	return accounts, nil
 }
+
+// GetCustomersLike implements IIndividualCustomerService.
+func (i *IndividualCustomerService) SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error) {
+	return i.IndividualCustomerRepo.GetManyPhoneNumberLike(ctx, phoneNumber)
+}

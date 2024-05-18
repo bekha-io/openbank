@@ -8,6 +8,7 @@ import (
 	"github.com/bekha-io/openbank/infrastructure/repository/mongodb"
 	"github.com/bekha-io/openbank/presentation/rest/accounts"
 	"github.com/bekha-io/openbank/presentation/rest/customers"
+	"github.com/bekha-io/openbank/presentation/rest/employees"
 	"github.com/bekha-io/openbank/presentation/rest/loans"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -44,16 +45,20 @@ func main() {
 		panic(err)
 	}
 
-	transactionsRepo := mongodb.NewMongoTransactionRepository(mongoClient, "vaultonomy")
-	accountsRepo := mongodb.NewMongoAccountRepository(mongoClient, "vaultonomy")
-	individualCustomersRepo := mongodb.NewMongoIndividualCustomerRepository(mongoClient, "vaultonomy")
+	dbName := "openbank"
+	transactionsRepo := mongodb.NewMongoTransactionRepository(mongoClient, dbName)
+	accountsRepo := mongodb.NewMongoAccountRepository(mongoClient, dbName)
+	individualCustomersRepo := mongodb.NewMongoIndividualCustomerRepository(mongoClient, dbName)
+	employeesRepo := mongodb.NewMongoEmployeeRepository(mongoClient, dbName)
 
 	accountsSvc := services.NewAccountsService(accountsRepo, transactionsRepo)
 	individualCustomersSvc := services.NewIndividualCustomerService(individualCustomersRepo, accountsRepo)
+	employeesSvc := services.NewEmployeeService(employeesRepo)
 	loansSvc := services.NewLoanService()
 
 	accountsController := accounts.NewAccountsController(accountsSvc)
 	customersController := customers.NewCustomerController(individualCustomersSvc)
+	employeesController := employees.NewEmployeeController(employeesSvc)
 	loansController := loans.NewLoanController(loansSvc)
 
 	r := gin.Default()
@@ -65,17 +70,27 @@ func main() {
 		// api/v1/customers
 		customersGroup := v1.Group("/customers")
 		{
+			customersGroup.GET("/:id", customersController.GetCustomer)
+			customersGroup.GET("/search", customersController.SearchCustomers)
 			customersGroup.POST("", customersController.CreateCustomer)
 			customersGroup.GET("/:id/accounts", customersController.GetCustomerAccounts)
 		}
 
 		accountsGroup := v1.Group("/accounts")
 		{
+			accountsGroup.GET("/:id", accountsController.GetAccount)
+			accountsGroup.GET("/:id/transactions", accountsController.GetAccountTransactions)
 			accountsGroup.GET("/search", accountsController.SearchAccounts)
 			accountsGroup.POST("", accountsController.CreateAccount)
 			accountsGroup.POST("/:id/withdraw", accountsController.Withdraw)
 			accountsGroup.POST("/:id/deposit", accountsController.Deposit)
 
+		}
+
+		employeesGroup := v1.Group("/employees")
+		{
+			employeesGroup.GET("/search", employeesController.SearchEmployees)
+			employeesGroup.POST("/", employeesController.CreateEmployee)
 		}
 
 		loansGroup := v1.Group("/loans")

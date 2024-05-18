@@ -14,7 +14,8 @@ import (
 type IAccountService interface {
 	CreateAccount(ctx context.Context, cmd dto.CreateAccountCommand) error
 	GetAccountByID(ctx context.Context, id types.AccountID) (*entities.Account, error)
-	SearchAccounts(ctx context.Context, id types.AccountID) ([]*entities.Account, error)
+	GetAccountTransactions(ctx context.Context, id types.AccountID) ([]*entities.Transaction, error)
+	GetAccountsLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error)
 	Deposit(ctx context.Context, cmd dto.DepositCommand) (*entities.Transaction, error)
 	Withdraw(ctx context.Context, cmd dto.WithdrawCommand) (*entities.Transaction, error)
 }
@@ -112,7 +113,12 @@ func (s *AccountsService) Withdraw(ctx context.Context, cmd dto.WithdrawCommand)
 	return transaction, nil
 }
 
-// SearchAccounts implements IAccountService.
-func (s *AccountsService) SearchAccounts(ctx context.Context, id types.AccountID) ([]*entities.Account, error) {
+// GetAccountsLike implements IAccountService.
+func (s *AccountsService) GetAccountsLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error) {
 	return s.AccountsRepo.GetManyIdLike(ctx, id)
+}
+
+
+func (s *AccountsService) GetAccountTransactions(ctx context.Context, id types.AccountID) ([]*entities.Transaction, error) {
+	return s.TransactionsRepo.GetManyBy(ctx, repository.Filter{Key: "account_id", EqualTo: string(id)})
 }

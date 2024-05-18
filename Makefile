@@ -9,7 +9,7 @@ test:
 
 # Dev runs
 dev:
-	set MONGODB_URI=mongodb://127.0.0.1:27017&& set APP_PORT=8080&& go run .
+	export MONGODB_URI=mongodb://openbank:openbank@127.0.0.1:27017&& export APP_PORT=8080&& go run .
 
 
 tidy:

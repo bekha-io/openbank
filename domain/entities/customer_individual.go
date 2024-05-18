@@ -9,17 +9,17 @@ import (
 )
 
 type IndividualCustomer struct {
-	ID          types.CustomerID
-	PhoneNumber string // without a leading +
+	ID          types.CustomerID `json:"id"`
+	PhoneNumber string `json:"phone_number"` // without a leading +
 
-	FirstName  string
-	LastName   string
-	MiddleName string
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	MiddleName string `json:"middle_name"`
 
-	Passport *Passport
+	Passport *Passport `json:"passport"`
 
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func NewIndividualCustomer(phoneNumber string) *IndividualCustomer {
