@@ -60,10 +60,10 @@ func NewMongoEmployeeRepository(client *mongo.Client, dbName string) *MongoEmplo
 }
 
 func (r *MongoEmployeeRepository) GetByEmail(ctx context.Context, email string) (*entities.Employee, error) {
-	var result mongoEmployee
-	err := r.cl.Database(r.dbName).Collection("employees").FindOne(ctx, bson.M{"email": email}).Decode(&result)
-	if err == mongo.ErrNoDocuments {
-		return nil, nil
+	var result *mongoEmployee
+	err := r.cl.Database(r.dbName).Collection("employees").FindOne(ctx, bson.D{{"email", email}}).Decode(&result)
+	if err != nil {
+		return nil, err
 	}
 	return result.ToEntity(), err
 }

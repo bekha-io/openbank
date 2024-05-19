@@ -41,6 +41,9 @@ type LoanInstallment struct {
 	// Interest specifies the portion of total repay amount being paid as the loan interest
 	Interest decimal.Decimal `json:"interest"`
 
+	// Penalty specifies amount to be paid within the installment because of overdue repayment 
+	Penalty decimal.Decimal 
+
 	// RepayAmountAfter specifies the amount of money left to be paid paid after the given installment fully repaid
 	RepayAmountAfter types.Money `json:"repay_amount_after"`
 

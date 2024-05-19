@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"encoding/hex"
 	"time"
 
 	"github.com/bekha-io/openbank/domain/types"
@@ -19,6 +18,7 @@ type Employee struct {
 	ImageUrl   string           `json:"image_url"`
 	CreatedAt  time.Time        `json:"created_at"`
 	UpdatedAt  time.Time        `json:"updated_at"`
+	Roles      []string         `json:"roles"`
 }
 
 // NewEmployee creates a new Employee based on the given parameters. Password is hashed as result
@@ -37,7 +37,7 @@ func NewEmployee(email, password, firstName, lastName, middleName string) *Emplo
 
 func hashPassword(password string) string {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return hex.EncodeToString(hashedPassword)
+	return string(hashedPassword)
 }
 
 func (e *Employee) IsPasswordCorrect(password string) bool {

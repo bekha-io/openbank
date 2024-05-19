@@ -5,20 +5,32 @@ import (
 
 	"github.com/bekha-io/openbank/domain/dto"
 	"github.com/bekha-io/openbank/domain/entities"
+	"github.com/bekha-io/openbank/domain/repository"
 	"github.com/bekha-io/openbank/domain/types"
 	"github.com/shopspring/decimal"
 )
 
 type ILoanService interface {
+	CreateLoanProduct(ctx context.Context, cmd dto.CreateLoanProductCommand) error
+	GetLoanProducts(ctx context.Context) ([]*entities.LoanProduct, error)
 	CalculateAnnuityInstallments(ctx context.Context, q dto.CalculateAnnuityInstallmentsQuery) ([]entities.LoanInstallment, error)
 }
 
 var _ ILoanService = (*LoanService)(nil)
 
-type LoanService struct{}
+type LoanService struct {
+	LoanRepository repository.ILoanRepository
+}
 
-func NewLoanService() *LoanService {
-	return &LoanService{}
+func NewLoanService(lr repository.ILoanRepository) *LoanService {
+	return &LoanService{
+		LoanRepository: lr,
+	}
+}
+
+// GetLoanProducts implements ILoanService.
+func (s *LoanService) GetLoanProducts(ctx context.Context) ([]*entities.LoanProduct, error) {
+	return s.LoanRepository.GetAllLoanProducts(ctx)
 }
 
 func (s *LoanService) CalculateAnnuityInstallments(ctx context.Context, q dto.CalculateAnnuityInstallmentsQuery) ([]entities.LoanInstallment, error) {
@@ -67,4 +79,24 @@ func (s *LoanService) CalculateAnnuityInstallments(ctx context.Context, q dto.Ca
 	}
 
 	return schedule, nil
+}
+
+// CreateLoanProduct implements ILoanService.
+func (s *LoanService) CreateLoanProduct(ctx context.Context, cmd dto.CreateLoanProductCommand) error {
+	// Validate input parameters
+	if err := cmd.Validate(); err != nil {
+		return err
+	}
+
+	lp, err := entities.NewLoanProduct(cmd.Name, cmd.MinAmount.Amount, cmd.MaxAmount.Amount,
+		cmd.MinAmount.Currency, cmd.InterestRate, cmd.LoanType, cmd.DailyOverduePenalty, cmd.MinDuration, cmd.MaxDuration)
+	if err != nil {
+		return err
+	}
+
+	err = s.LoanRepository.SaveLoanProduct(ctx, lp)
+	if err != nil {
+		return err
+	}
+	return nil
 }
