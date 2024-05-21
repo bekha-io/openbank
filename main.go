@@ -88,12 +88,14 @@ func main() {
 
 		accountsGroup := v1.Group("/accounts")
 		{
+			accountsGroup.GET("/search", accountsController.SearchAccounts)
+			accountsGroup.POST("/transfer", accountsController.Transfer)
 			accountsGroup.GET("/:id", accountsController.GetAccount)
 			accountsGroup.GET("/:id/transactions", accountsController.GetAccountTransactions)
-			accountsGroup.GET("/search", accountsController.SearchAccounts)
 			accountsGroup.POST("", accountsController.CreateAccount)
 			accountsGroup.POST("/:id/withdraw", accountsController.Withdraw)
 			accountsGroup.POST("/:id/deposit", accountsController.Deposit)
+			
 		}
 
 		employeesGroup := v1.Group("/employees")
