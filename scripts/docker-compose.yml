@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  openbank-api:
+    image: openbank-api
+    build:
+      context: "../"
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      - APP_PORT=8080
+      - MONGODB_URI=mongodb://openbank:openbank@mongo:27017
+    depends_on:
+      - mongo
+
   mongo:
     image: mongo
     restart: always
