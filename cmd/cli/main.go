@@ -39,7 +39,7 @@ func CreateEmployee(c *cli.Context) error {
         return err
     }
 
-	log.Printf("Created! Email: %v | Password: %v \n", employee.Email, employee.Password)
+	log.Printf("Created! Email: %v | Password: %v \n", employee.Email, pwd)
 	return nil
 }
 
