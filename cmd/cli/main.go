@@ -27,9 +27,9 @@ func CreateEmployee(c *cli.Context) error {
 		pwd, _ = password.Generate(6, 0, 0, false, true)
 	}
 
-	firstName := c.String("first-name")
-	lastName := c.String("last-name")
-	middleName := c.String("middle-name")
+	firstName := c.String("firstName")
+	lastName := c.String("lastName")
+	middleName := c.String("middleName")
 
 	employee := entities.NewEmployee(email, pwd, firstName, lastName, middleName)
 
@@ -56,11 +56,41 @@ func main() {
 		Name: "openbank-cli",
 		Commands: []*cli.Command{
 			{
-				Name: "customers",
+				Name: "employees",
 				Subcommands: []*cli.Command{
 					{
 						Name: "create",
 						Action: CreateEmployee,
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+                                Name:    "email",
+                                Aliases: []string{"e"},
+                                Usage:   "email",
+								Required: true,
+                            },
+                            &cli.StringFlag{
+                                Name:    "password",
+                                Aliases: []string{"p"},
+                                Usage:   "Employee's password (optional)",
+                            },
+                            &cli.StringFlag{
+                                Name:    "firstName",
+                                Aliases: []string{"fn"},
+                                Usage:   "Employee's first name",
+								Required: true,
+                            },
+                            &cli.StringFlag{
+                                Name:    "lastName",
+                                Aliases: []string{"ln"},
+                                Usage:   "Employee's last name",
+								Required: true,
+                            },
+                            &cli.StringFlag{
+                                Name:    "middleName",
+                                Aliases: []string{"mn"},
+                                Usage:   "Employee's middle name",
+                            },
+						},
 					},
 				},
 			},
