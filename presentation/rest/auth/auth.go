@@ -7,8 +7,8 @@ import (
 
 	"github.com/bekha-io/openbank/domain/services"
 	"github.com/bekha-io/openbank/domain/types/errs"
+	"github.com/bekha-io/openbank/presentation/rest/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthController struct {
@@ -16,50 +16,11 @@ type AuthController struct {
 	EmployeeService      services.IEmployeeService
 }
 
-var (
-	// Only for testing purposes. Should not be used in production
-	jwtSigningKey = []byte("openbankjwtsigningkey")
-)
-
 func NewAuthController(authSvc services.IAuthorizationService, emplSvc services.IEmployeeService) *AuthController {
 	return &AuthController{
 		EmployeeService:      emplSvc,
 		AuthorizationService: authSvc,
 	}
-}
-
-func (ctrl *AuthController) generateJwtToken(expiresAt time.Time, values map[string]interface{}) (string, error) {
-	claims := jwt.MapClaims{
-		"iss": "openbank-api-server",
-		"iat": time.Now().UTC().Unix(),
-		"exp": expiresAt.Unix(),
-	}
-	for k, v := range values {
-		claims[k] = v
-	}
-
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signed, err := t.SignedString(jwtSigningKey)
-	if err != nil {
-		return "", err
-	}
-
-	return signed, nil
-}
-
-func (ctrl *AuthController) parseToken(token string) (jwt.MapClaims, error) {
-	parsedToken, err := jwt.Parse(token, func(t *jwt.Token) (interface{}, error) {
-		return jwtSigningKey, nil
-	}, jwt.WithExpirationRequired(), jwt.WithIssuedAt())
-	if err != nil {
-		return nil, err
-	}
-
-	if !parsedToken.Valid {
-		return nil, errors.New("token is not valid")
-	}
-
-	return parsedToken.Claims.(jwt.MapClaims), nil
 }
 
 func (ctrl *AuthController) EmployeeSignIn(c *gin.Context) {
@@ -77,7 +38,7 @@ func (ctrl *AuthController) EmployeeSignIn(c *gin.Context) {
 		return
 	}
 
-	token, err := ctrl.generateJwtToken(time.Now().UTC().Add(time.Hour*12), map[string]interface{}{
+	token, err := utils.GenerateJwtToken(time.Now().UTC().Add(time.Hour*12), map[string]interface{}{
 		"employee_id": employee.ID,
 		"roles":       employee.Roles,
 	})
@@ -94,7 +55,7 @@ func (ctrl *AuthController) EmployeeAuthenticateMiddleware() gin.HandlerFunc {
 		authHeader := c.GetHeader("Authorization")
 		bearerToken := strings.Replace(authHeader, "Bearer ", "", 1)
 
-		claims, err := ctrl.parseToken(bearerToken)
+		claims, err := utils.ParseToken(bearerToken)
 		if err != nil {
 			c.JSON(401, gin.H{"error": errors.Join(errs.ErrNotAuthenticated, err).Error()})
 			c.Abort()

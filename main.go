@@ -13,6 +13,7 @@ import (
 	"github.com/bekha-io/openbank/presentation/rest/customers"
 	"github.com/bekha-io/openbank/presentation/rest/employees"
 	"github.com/bekha-io/openbank/presentation/rest/loans"
+	"github.com/bekha-io/openbank/presentation/rest/me"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/shopspring/decimal"
@@ -95,7 +96,7 @@ func main() {
 			accountsGroup.POST("", accountsController.CreateAccount)
 			accountsGroup.POST("/:id/withdraw", accountsController.Withdraw)
 			accountsGroup.POST("/:id/deposit", accountsController.Deposit)
-			
+
 		}
 
 		employeesGroup := v1.Group("/employees")
@@ -112,6 +113,18 @@ func main() {
 			loansGroup.GET("/products", loansController.GetLoanProducts)
 			loansGroup.POST("/products", loansController.CreateLoanProduct)
 		}
+	}
+
+	meCtrl := me.NewController(accountsSvc, individualCustomersSvc)
+
+	// Temporary API for checking mobile application.
+	// Mobile app should be a separate solution, not attached to core
+	// /me
+	meg := r.Group("/me")
+	meg.POST("/auth", meCtrl.CustomerSignIn)
+	meg.Use(meCtrl.CustomerAuthenticateMiddleware())
+	{
+		meg.GET("/accounts", meCtrl.GetAccounts)
 	}
 
 	r.Run(":" + os.Getenv("APP_PORT"))
