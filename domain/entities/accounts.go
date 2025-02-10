@@ -11,10 +11,8 @@ type Account struct {
 	ID         types.AccountID  `json:"id"`
 	CustomerID types.CustomerID `json:"customer_id"`
 	Balance    *types.Money     `json:"balance"`
-
-	TrustedCustomers []*Customer `json:"-"` // Customers that are allowed to access this account and perform operations
-	CreatedAt        time.Time   `json:"created_at"`
-	UpdatedAt        time.Time   `json:"updated_at"`
+	CreatedAt        time.Time             `json:"created_at"`
+	UpdatedAt        time.Time             `json:"updated_at"`
 }
 
 func NewAccount(customerId types.CustomerID, currency types.Currency) *Account {

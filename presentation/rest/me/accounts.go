@@ -21,7 +21,7 @@ func (ctrl *Controller) GetAccounts(c *gin.Context) {
 		return
 	}
 
-	accounts, err := ctrl.CustomersService.GetCustomerAccounts(c, customer)
+	accounts, err := ctrl.CustomersService.GetCustomerAccounts(c, *customer)
 	if err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return

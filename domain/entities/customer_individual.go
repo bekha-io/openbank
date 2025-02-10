@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type IndividualCustomer struct {
+type Customer struct {
 	ID          types.CustomerID `json:"id"`
-	PhoneNumber string `json:"phone_number"` // without a leading +
+	PhoneNumber string           `json:"phone_number"` // without a leading +
 
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
@@ -22,8 +22,8 @@ type IndividualCustomer struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewIndividualCustomer(phoneNumber string) *IndividualCustomer {
-	return &IndividualCustomer{
+func NewIndividualCustomer(phoneNumber string) *Customer {
+	return &Customer{
 		ID:          types.CustomerID(uuid.New()),
 		PhoneNumber: phoneNumber,
 		CreatedAt:   time.Now().UTC(),
@@ -31,10 +31,10 @@ func NewIndividualCustomer(phoneNumber string) *IndividualCustomer {
 	}
 }
 
-func (c *IndividualCustomer) Id() types.CustomerID {
+func (c *Customer) Id() types.CustomerID {
 	return c.ID
 }
 
-func (c IndividualCustomer) FullName() string {
+func (c Customer) FullName() string {
 	return fmt.Sprintf("%v %v %v", c.LastName, c.FirstName, c.MiddleName)
 }

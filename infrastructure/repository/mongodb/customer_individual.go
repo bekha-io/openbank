@@ -21,7 +21,7 @@ type mongoIndividualCustomer struct {
 	MiddleName  string `bson:"middle_name"`
 }
 
-func (c *mongoIndividualCustomer) ParseEntity(e *entities.IndividualCustomer) {
+func (c *mongoIndividualCustomer) ParseEntity(e *entities.Customer) {
 	c.ID = e.ID.String()
 	c.PhoneNumber = e.PhoneNumber
 	c.FirstName = e.FirstName
@@ -29,8 +29,8 @@ func (c *mongoIndividualCustomer) ParseEntity(e *entities.IndividualCustomer) {
 	c.MiddleName = e.MiddleName
 }
 
-func (c *mongoIndividualCustomer) ToEntity() *entities.IndividualCustomer {
-	return &entities.IndividualCustomer{
+func (c *mongoIndividualCustomer) ToEntity() *entities.Customer {
+	return &entities.Customer{
 		ID:          types.CustomerID(uuid.MustParse(c.ID)),
 		PhoneNumber: c.PhoneNumber,
 		FirstName:   c.FirstName,
@@ -54,7 +54,7 @@ func NewMongoIndividualCustomerRepository(cl *mongo.Client, dbName string) repos
 }
 
 // GetBy implements repository.IIndividualCustomerRepository.
-func (r *MongoIndividualCustomerRepository) GetBy(ctx context.Context, key string, value interface{}) (*entities.IndividualCustomer, error) {
+func (r *MongoIndividualCustomerRepository) GetBy(ctx context.Context, key string, value interface{}) (*entities.Customer, error) {
 	var row mongoIndividualCustomer
 	err := r.cl.Database(r.dbName).Collection("individual_customers").
 		FindOne(ctx, bson.M{key: value}).Decode(&row)
@@ -65,12 +65,12 @@ func (r *MongoIndividualCustomerRepository) GetBy(ctx context.Context, key strin
 }
 
 // GetByID implements repository.IIndividualCustomerRepository.
-func (r *MongoIndividualCustomerRepository) GetByID(ctx context.Context, id types.CustomerID) (*entities.IndividualCustomer, error) {
+func (r *MongoIndividualCustomerRepository) GetByID(ctx context.Context, id types.CustomerID) (*entities.Customer, error) {
 	return r.GetBy(ctx, "id", id.String())
 }
 
 // Save implements repository.IIndividualCustomerRepository.
-func (r *MongoIndividualCustomerRepository) Save(ctx context.Context, customer *entities.IndividualCustomer) error {
+func (r *MongoIndividualCustomerRepository) Save(ctx context.Context, customer *entities.Customer) error {
 	c := &mongoIndividualCustomer{}
 	c.ParseEntity(customer)
 
@@ -83,7 +83,7 @@ func (r *MongoIndividualCustomerRepository) Save(ctx context.Context, customer *
 }
 
 // GetManyIDLike implements repository.IIndividualCustomerRepository.
-func (r *MongoIndividualCustomerRepository) GetManyIDLike(ctx context.Context, id types.Currency) ([]*entities.IndividualCustomer, error) {
+func (r *MongoIndividualCustomerRepository) GetManyIDLike(ctx context.Context, id types.Currency) ([]*entities.Customer, error) {
 	pattern := ".*" + id + ".*"
 	cur, err := r.cl.Database(r.dbName).Collection("individual_customers").
 		Find(ctx, bson.M{"id": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
@@ -97,7 +97,7 @@ func (r *MongoIndividualCustomerRepository) GetManyIDLike(ctx context.Context, i
 		return nil, err
 	}
 
-	var customers []*entities.IndividualCustomer
+	var customers []*entities.Customer
 	for _, mongoAcc := range mongoCustomers {
 		customers = append(customers, mongoAcc.ToEntity())
 	}
@@ -105,7 +105,7 @@ func (r *MongoIndividualCustomerRepository) GetManyIDLike(ctx context.Context, i
 	return customers, nil
 }
 
-func (r *MongoIndividualCustomerRepository) GetManyPhoneNumberLike(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error) {
+func (r *MongoIndividualCustomerRepository) GetManyPhoneNumberLike(ctx context.Context, phoneNumber string) ([]*entities.Customer, error) {
 	pattern := ".*" + phoneNumber + ".*"
 	cur, err := r.cl.Database(r.dbName).Collection("individual_customers").
 		Find(ctx, bson.M{"phone_number": bson.M{"$regex": primitive.Regex{Pattern: string(pattern)}}})
@@ -119,11 +119,10 @@ func (r *MongoIndividualCustomerRepository) GetManyPhoneNumberLike(ctx context.C
 		return nil, err
 	}
 
-	var customers []*entities.IndividualCustomer
+	var customers []*entities.Customer
 	for _, mongoAcc := range mongoCustomers {
 		customers = append(customers, mongoAcc.ToEntity())
 	}
 
 	return customers, nil
 }
-

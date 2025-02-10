@@ -11,7 +11,7 @@ import (
 	"github.com/bekha-io/openbank/domain/types/errs"
 )
 
-var _ IIndividualCustomerService = (*IndividualCustomerService)(nil)
+var _ ICustomerService = (*IndividualCustomerService)(nil)
 
 type IndividualCustomerService struct {
 	IndividualCustomerRepo repository.IIndividualCustomerRepository
@@ -39,7 +39,7 @@ func (i *IndividualCustomerService) CreateCustomer(ctx context.Context, in dto.C
 }
 
 // GetCustomer implements IIndividualCustomerService.
-func (i *IndividualCustomerService) GetCustomer(ctx context.Context, id types.CustomerID) (*entities.IndividualCustomer, error) {
+func (i *IndividualCustomerService) GetCustomer(ctx context.Context, id types.CustomerID) (*entities.Customer, error) {
 	record, err := i.IndividualCustomerRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, errors.Join(errs.ErrIndividualCustomerNotFound, err)
@@ -48,7 +48,7 @@ func (i *IndividualCustomerService) GetCustomer(ctx context.Context, id types.Cu
 }
 
 // GetCustomerBy implements IIndividualCustomerService.
-func (s *IndividualCustomerService) GetCustomerBy(ctx context.Context, key string, value interface{}) (*entities.IndividualCustomer, error) {
+func (s *IndividualCustomerService) GetCustomerBy(ctx context.Context, key string, value interface{}) (*entities.Customer, error) {
 	record, err := s.IndividualCustomerRepo.GetBy(ctx, key, value)
 	if err != nil {
 		return nil, errors.Join(errs.ErrIndividualCustomerNotFound, err)
@@ -66,6 +66,6 @@ func (s *IndividualCustomerService) GetCustomerAccounts(ctx context.Context, cus
 }
 
 // GetCustomersLike implements IIndividualCustomerService.
-func (i *IndividualCustomerService) SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error) {
+func (i *IndividualCustomerService) SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.Customer, error) {
 	return i.IndividualCustomerRepo.GetManyPhoneNumberLike(ctx, phoneNumber)
 }

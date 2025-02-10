@@ -8,15 +8,10 @@ import (
 	"github.com/bekha-io/openbank/domain/types"
 )
 
-type IIndividualCustomerService interface {
+type ICustomerService interface {
 	CreateCustomer(ctx context.Context, in dto.CreateIndividualCustomerCommand) error
-	GetCustomer(ctx context.Context, id types.CustomerID) (*entities.IndividualCustomer, error)
-	GetCustomerBy(ctx context.Context, key string, value interface{}) (*entities.IndividualCustomer, error)
-	SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error)
-	GetCustomerAccounts(ctx context.Context, customer entities.Customer) ([]*entities.Account, error)
-}
-
-type ILegalCustomerService interface {
-	CreateCustomer(ctx context.Context, in dto.CreateLegalCustomerCommand) error
 	GetCustomer(ctx context.Context, id types.CustomerID) (*entities.Customer, error)
+	GetCustomerBy(ctx context.Context, key string, value interface{}) (*entities.Customer, error)
+	SearchCustomersByPhoneNumber(ctx context.Context, phoneNumber string) ([]*entities.Customer, error)
+	GetCustomerAccounts(ctx context.Context, customer entities.Customer) ([]*entities.Account, error)
 }

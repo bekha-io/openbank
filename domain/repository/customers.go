@@ -8,9 +8,9 @@ import (
 )
 
 type IIndividualCustomerRepository interface {
-	GetByID(ctx context.Context, id types.CustomerID) (*entities.IndividualCustomer, error)
-	GetBy(ctx context.Context, key string, value interface{}) (*entities.IndividualCustomer, error)
-	GetManyIDLike(ctx context.Context, id types.Currency) ([]*entities.IndividualCustomer, error)
-	GetManyPhoneNumberLike(ctx context.Context, phoneNumber string) ([]*entities.IndividualCustomer, error)
-	Save(ctx context.Context, customer *entities.IndividualCustomer) error
+	GetByID(ctx context.Context, id types.CustomerID) (*entities.Customer, error)
+	GetBy(ctx context.Context, key string, value interface{}) (*entities.Customer, error)
+	GetManyIDLike(ctx context.Context, id types.Currency) ([]*entities.Customer, error)
+	GetManyPhoneNumberLike(ctx context.Context, phoneNumber string) ([]*entities.Customer, error)
+	Save(ctx context.Context, customer *entities.Customer) error
 }

@@ -118,7 +118,6 @@ func (s *AccountsService) GetAccountsLike(ctx context.Context, id types.AccountI
 	return s.AccountsRepo.GetManyIdLike(ctx, id)
 }
 
-
 func (s *AccountsService) GetAccountTransactions(ctx context.Context, id types.AccountID) ([]*entities.Transaction, error) {
 	return s.TransactionsRepo.GetManyBy(ctx, repository.Filter{Key: "account_id", EqualTo: string(id)})
 }
