@@ -23,7 +23,7 @@ func (ctrl *AccountsController) CreateAccount(c *gin.Context) {
 	}
 
 	err = ctrl.AccountsService.CreateAccount(c, dto.CreateAccountCommand{
-		CustomerID: types.CustomerID(in.CustomerID), Currency: types.Currency(in.Currency)})
+		CustomerID: in.CustomerID, Currency: types.Currency(in.Currency)})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

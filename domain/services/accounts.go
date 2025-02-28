@@ -3,121 +3,125 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/bekha-io/openbank/domain/dto"
 	"github.com/bekha-io/openbank/domain/entities"
 	"github.com/bekha-io/openbank/domain/repository"
-	"github.com/bekha-io/openbank/domain/types"
 	"github.com/bekha-io/openbank/domain/types/errs"
+	"github.com/bekha-io/openbank/infrastructure/fineract"
+	"github.com/shopspring/decimal"
 )
+
+type TransferIn struct {
+	FromAccountId   uint
+	ToBeneficiaryId uint
+	Amount          decimal.Decimal
+	Comment         string
+}
 
 type IAccountService interface {
 	CreateAccount(ctx context.Context, cmd dto.CreateAccountCommand) error
-	GetAccountByID(ctx context.Context, id types.AccountID) (*entities.Account, error)
-	GetAccountTransactions(ctx context.Context, id types.AccountID) ([]*entities.Transaction, error)
-	GetAccountsLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error)
-	Deposit(ctx context.Context, cmd dto.DepositCommand) (*entities.Transaction, error)
-	Withdraw(ctx context.Context, cmd dto.WithdrawCommand) (*entities.Transaction, error)
+	GetAccountByID(ctx context.Context, id uint) (*entities.Account, error)
+	Transfer(ctx context.Context, in TransferIn) (*entities.Transaction, error)
+	GetAccountTransactions(ctx context.Context, id uint) ([]*entities.Transaction, error)
 }
 
 var _ IAccountService = (*AccountsService)(nil)
 
 type AccountsService struct {
-	AccountsRepo     repository.IAccountRepository
+	Core             fineract.FineractClientI
+	BeneficiaryRepo  repository.IBenificiaryRepository
 	TransactionsRepo repository.ITransactionRepository
 }
 
-func NewAccountsService(accountsRepo repository.IAccountRepository, transactionsRepo repository.ITransactionRepository) *AccountsService {
+// Transfer implements IAccountService.
+func (s *AccountsService) Transfer(ctx context.Context, in TransferIn) (*entities.Transaction, error) {
+
+	beneficiary, err := s.BeneficiaryRepo.GetBeneficiaryByID(ctx, in.ToBeneficiaryId)
+	if err != nil {
+		return nil, err
+	}
+
+	accounts, err := s.Core.GetClientsAccounts(ctx, beneficiary.BeneficiaryCustomerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(accounts.SavingsAccounts) == 0 {
+		return nil, errs.ErrAccountNotFound
+	}
+
+	var primaryAccountId uint = accounts.SavingsAccounts[0].ID
+
+	out, err := s.Core.Transfer(ctx, fineract.TransferIn{
+		FromOfficeId:        1,
+		ToOfficeId:          1,
+		FromAccountType:     2,
+		ToAccountType:       2,
+		FromClientId:        beneficiary.OwnerCustomerID,
+		ToClientId:          beneficiary.BeneficiaryCustomerID,
+		FromAccountId:       in.FromAccountId,
+		ToAccountId:         primaryAccountId,
+		TransferAmount:      in.Amount.InexactFloat64(),
+		DateFormat:          "dd.MM.yyyy HH:mm:ss",
+		TransferDate:        time.Now().Format("02.01.2006 15:04:05"),
+		TransferDescription: "Перевод между счетами",
+		Locale:              "ru",
+	})
+
+	tr := &entities.Transaction{
+		ID:            out.ResourceId,
+		Amount:        in.Amount,
+		FromAccountId: in.FromAccountId,
+		ToAccountId:   primaryAccountId,
+		CreatedAt:     time.Now().UTC(),
+		Comment:       in.Comment,
+	}
+	if err != nil {
+		tr.Status = entities.TransactionStatusFailed
+		tr.StatusReason = err.Error()
+	}
+
+	err = s.TransactionsRepo.SaveTransaction(ctx, tr)
+	return tr, err
+}
+
+func NewAccountsService(core fineract.FineractClientI, br repository.IBenificiaryRepository, tr repository.ITransactionRepository) *AccountsService {
 	return &AccountsService{
-		AccountsRepo:     accountsRepo,
-		TransactionsRepo: transactionsRepo,
+		Core:             core,
+		BeneficiaryRepo:  br,
+		TransactionsRepo: tr,
 	}
 }
 
 func (s *AccountsService) CreateAccount(ctx context.Context, cmd dto.CreateAccountCommand) error {
-	acc := entities.NewAccount(cmd.CustomerID, cmd.Currency)
-	err := s.AccountsRepo.Save(ctx, acc)
+	_, err := s.Core.CreateSavingsAccount(ctx, fineract.CreateSavingsAccountIn{
+		ClientId:        uint(cmd.CustomerID),
+		DateFormat:      "dd.MM.yyyy",
+		Locale:          "ru",
+		ProductId:       1,
+		SubmittedOnDate: time.Now().Format("02.01.2006"),
+	})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (s *AccountsService) GetAccountByID(ctx context.Context, id types.AccountID) (*entities.Account, error) {
-	acc, err := s.AccountsRepo.GetByID(ctx, id)
+func (s *AccountsService) GetAccountByID(ctx context.Context, id uint) (*entities.Account, error) {
+	acc, err := s.Core.GetSavingsAccountById(ctx, id)
 	if err != nil {
 		return nil, errors.Join(errs.ErrAccountNotFound, err)
 	}
-	return acc, err
+	return acc.ToEntity(), err
 }
 
-// Deposit implements IAccountService.
-func (s *AccountsService) Deposit(ctx context.Context, cmd dto.DepositCommand) (*entities.Transaction, error) {
-	err := cmd.Money.Validate()
+func (s *AccountsService) GetAccountTransactions(ctx context.Context, id uint) ([]*entities.Transaction, error) {
+	transactions, err := s.TransactionsRepo.GetTransactionsByAccountID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-
-	if cmd.Money.Currency != cmd.Account.Balance.Currency {
-		return nil, errs.ErrAccountDifferentCurrencies
-	}
-
-	err = cmd.Account.Balance.Add(cmd.Money)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.AccountsRepo.Save(ctx, cmd.Account)
-	if err != nil {
-		return nil, err
-	}
-
-	transaction := entities.NewTransaction(cmd.Account.ID, types.DepositTransactionType, cmd.Money)
-	transaction.Comment = cmd.Comment
-	err = s.TransactionsRepo.Save(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
-
-// Withdraw implements IAccountService.
-func (s *AccountsService) Withdraw(ctx context.Context, cmd dto.WithdrawCommand) (*entities.Transaction, error) {
-	err := cmd.Money.Validate()
-	if err != nil {
-		return nil, err
-	}
-
-	if cmd.Money.Currency != cmd.Account.Balance.Currency {
-		return nil, errs.ErrAccountDifferentCurrencies
-	}
-
-	err = cmd.Account.Balance.Sub(cmd.Money)
-	if err != nil {
-		return nil, err
-	}
-
-	err = s.AccountsRepo.Save(ctx, cmd.Account)
-	if err != nil {
-		return nil, err
-	}
-
-	transaction := entities.NewTransaction(cmd.Account.ID, types.WithdrawTransactionType, cmd.Money)
-	transaction.Comment = cmd.Comment
-	err = s.TransactionsRepo.Save(ctx, transaction)
-	if err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
-
-// GetAccountsLike implements IAccountService.
-func (s *AccountsService) GetAccountsLike(ctx context.Context, id types.AccountID) ([]*entities.Account, error) {
-	return s.AccountsRepo.GetManyIdLike(ctx, id)
-}
-
-func (s *AccountsService) GetAccountTransactions(ctx context.Context, id types.AccountID) ([]*entities.Transaction, error) {
-	return s.TransactionsRepo.GetManyBy(ctx, repository.Filter{Key: "account_id", EqualTo: string(id)})
+	return transactions, nil
 }

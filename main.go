@@ -1,24 +1,15 @@
 package main
 
 import (
-	"context"
 	"os"
 
-	"github.com/bekha-io/openbank/domain/entities/permissions"
 	"github.com/bekha-io/openbank/domain/services"
-	"github.com/bekha-io/openbank/infrastructure/repository/file"
-	"github.com/bekha-io/openbank/infrastructure/repository/mongodb"
-	"github.com/bekha-io/openbank/presentation/rest/accounts"
-	"github.com/bekha-io/openbank/presentation/rest/auth"
-	"github.com/bekha-io/openbank/presentation/rest/customers"
-	"github.com/bekha-io/openbank/presentation/rest/employees"
-	"github.com/bekha-io/openbank/presentation/rest/loans"
+	"github.com/bekha-io/openbank/infrastructure/fineract"
+	"github.com/bekha-io/openbank/infrastructure/repository/memory"
 	"github.com/bekha-io/openbank/presentation/rest/me"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/shopspring/decimal"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func init() {
@@ -42,78 +33,26 @@ func CORSMiddleware() gin.HandlerFunc {
 }
 
 func main() {
-	ctx := context.Background()
+	fineractBaseUrl := os.Getenv("FINERACT_BASE_URL")
+	fineractUsername := os.Getenv("FINERACT_USERNAME")
+	fineractTenant := os.Getenv("FINERACT_TENANT")
+	fineractPassword := os.Getenv("FINERACT_PASSWORD")
 
-	mongoUri := os.Getenv("MONGODB_URI")
-	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoUri))
-	if err != nil {
-		panic(err)
+	fr := &fineract.FineractClient{
+		BaseUrl:    fineractBaseUrl,
+		TenantName: fineractTenant,
+		Username:   fineractUsername,
+		Password:   fineractPassword,
 	}
 
-	dbName := "openbank"
-	transactionsRepo := mongodb.NewMongoTransactionRepository(mongoClient, dbName)
-	accountsRepo := mongodb.NewMongoAccountRepository(mongoClient, dbName)
-	individualCustomersRepo := mongodb.NewMongoIndividualCustomerRepository(mongoClient, dbName)
-	employeesRepo := mongodb.NewMongoEmployeeRepository(mongoClient, dbName)
-	loansRepo := mongodb.NewMongoLoanRepository(mongoClient, dbName)
-	rolesRepo := &file.FileRolesRepository{Dir: "tmp/roles"}
+	beneficiariesMemoryRepo := memory.NewMemoryBeneficiaryRepository()
+	transactionsMemoryRepo := memory.NewMemoryTransactionRepository()
 
-	accountsSvc := services.NewAccountsService(accountsRepo, transactionsRepo)
-	individualCustomersSvc := services.NewIndividualCustomerService(individualCustomersRepo, accountsRepo)
-	employeesSvc := services.NewEmployeeService(employeesRepo)
-	loansSvc := services.NewLoanService(loansRepo)
-	authSvc := services.NewAuthorizationService(rolesRepo)
-
-	accountsController := accounts.NewAccountsController(accountsSvc)
-	customersController := customers.NewCustomerController(individualCustomersSvc)
-	employeesController := employees.NewEmployeeController(employeesSvc)
-	loansController := loans.NewLoanController(loansSvc)
-	authController := auth.AuthController{EmployeeService: employeesSvc, AuthorizationService: authSvc}
+	accountsSvc := services.NewAccountsService(fr, beneficiariesMemoryRepo, transactionsMemoryRepo)
+	individualCustomersSvc := services.NewIndividualCustomerService(fr, beneficiariesMemoryRepo)
 
 	r := gin.Default()
 	r.Use(CORSMiddleware())
-
-	// api/v1
-	v1 := r.Group("/v1")
-	v1.POST("/employees/auth", authController.EmployeeSignIn)
-	v1.Use(authController.EmployeeAuthenticateMiddleware())
-	{
-		// api/v1/customers
-		customersGroup := v1.Group("/customers")
-		{
-			customersGroup.GET("/:id", customersController.GetCustomer)
-			customersGroup.GET("/search", customersController.SearchCustomers)
-			customersGroup.POST("", customersController.CreateCustomer)
-			customersGroup.GET("/:id/accounts", customersController.GetCustomerAccounts)
-		}
-
-		accountsGroup := v1.Group("/accounts")
-		{
-			accountsGroup.GET("/search", accountsController.SearchAccounts)
-			accountsGroup.POST("/transfer", accountsController.Transfer)
-			accountsGroup.GET("/:id", accountsController.GetAccount)
-			accountsGroup.GET("/:id/transactions", accountsController.GetAccountTransactions)
-			accountsGroup.POST("", accountsController.CreateAccount)
-			accountsGroup.POST("/:id/withdraw", accountsController.Withdraw)
-			accountsGroup.POST("/:id/deposit", accountsController.Deposit)
-
-		}
-
-		employeesGroup := v1.Group("/employees")
-		{
-			employeesGroup.GET("/search", authController.IfHasPermissions(employeesController.SearchEmployees, permissions.CanReadEmployee))
-			employeesGroup.POST("/", employeesController.CreateEmployee)
-		}
-
-		loansGroup := v1.Group("/loans")
-		{
-			loansGroup.POST("/calculate", loansController.AnnuitySchedule)
-
-			// Loan products
-			loansGroup.GET("/products", loansController.GetLoanProducts)
-			loansGroup.POST("/products", loansController.CreateLoanProduct)
-		}
-	}
 
 	meCtrl := me.NewController(accountsSvc, individualCustomersSvc)
 
@@ -125,6 +64,20 @@ func main() {
 	meg.Use(meCtrl.CustomerAuthenticateMiddleware())
 	{
 		meg.GET("/accounts", meCtrl.GetAccounts)
+		meg.GET("/customers/:phoneNumber", meCtrl.GetCustomerByPhoneNumber)
+
+		bnf := meg.Group("/beneficiaries")
+		{
+			bnf.POST("", meCtrl.CreateBeneficiary)
+			bnf.GET("", meCtrl.GetCustomerBeneficiaries)
+			bnf.GET("/:id", meCtrl.GetBeneficiaryByID)
+		}
+
+		transfers := meg.Group("/transfers")
+		{
+			transfers.POST("", meCtrl.TransferMoney)
+			transfers.GET("", meCtrl.GetAccountTransactions)
+		}
 	}
 
 	r.Run(":" + os.Getenv("APP_PORT"))

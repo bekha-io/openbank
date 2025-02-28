@@ -21,14 +21,14 @@ func (ctrl *Controller) CustomerSignIn(c *gin.Context) {
 		handleError(c, 400, err)
 		return
 	}
-	
-	customer, err := ctrl.CustomersService.GetCustomerBy(c, "phone_number", in.PhoneNumber)
+
+	customer, err := ctrl.CustomersService.GetCustomerByPhoneNumber(c, in.PhoneNumber)
 	if err != nil {
 		handleError(c, 404, err)
 		return
 	}
 
-	token, err := utils.GenerateJwtToken(time.Now().UTC().Add(time.Hour * 12), map[string]interface{}{
+	token, err := utils.GenerateJwtToken(time.Now().UTC().Add(time.Hour*12), map[string]interface{}{
 		"customer_id": customer.ID,
 	})
 	if err != nil {
@@ -38,26 +38,32 @@ func (ctrl *Controller) CustomerSignIn(c *gin.Context) {
 	c.JSON(200, gin.H{"customer": customer, "token": token})
 }
 
-
 func (ctrl *Controller) CustomerAuthenticateMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
-        bearerToken := strings.Replace(authHeader, "Bearer ", "", 1)
+		bearerToken := strings.Replace(authHeader, "Bearer ", "", 1)
 
-        claims, err := utils.ParseToken(bearerToken)
-        if err!= nil {
-            ctx.JSON(401, gin.H{"error": errors.Join(errs.ErrNotAuthenticated, err).Error()})
+		claims, err := utils.ParseToken(bearerToken)
+		if err != nil {
+			ctx.JSON(401, gin.H{"error": errors.Join(errs.ErrNotAuthenticated, err).Error()})
+			ctx.Abort()
+			return
+		}
+
+		customerId, okId := claims["customer_id"]
+		if !okId {
+			ctx.JSON(401, gin.H{"error": errs.ErrNotAuthenticated.Error()})
+			ctx.Abort()
+			return
+		}
+
+		v, ok := customerId.(float64)
+		if !ok {
+			ctx.JSON(401, gin.H{"error": "Invalid customer ID"})
             ctx.Abort()
             return
-        }
+		}
 
-        customerId, okId := claims["customer_id"]
-        if!okId {
-            ctx.JSON(401, gin.H{"error": errs.ErrNotAuthenticated.Error()})
-            ctx.Abort()
-            return
-        }
-
-        ctx.Set("customerId", customerId)
+		ctx.Set("customerId", v)
 	}
 }

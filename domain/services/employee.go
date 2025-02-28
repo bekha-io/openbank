@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/bekha-io/openbank/domain/entities"
 	"github.com/bekha-io/openbank/domain/repository"
@@ -34,8 +33,6 @@ func (e *EmployeeService) Authenticate(ctx context.Context, email string, passwo
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Info("passswords", "input", password, "hash", emp.Password, "compare", emp.IsPasswordCorrect(password))
 
 	if emp == nil {
         return nil, errs.ErrEmployeeInvalidPassword

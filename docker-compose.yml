@@ -7,15 +7,7 @@ services:
       - 8080:8080
     environment:
       - APP_PORT=8080
-      - MONGODB_URI=mongodb://root:neobank!2025@mongo:27017
-
-  mongo:
-    image: mongo:8.0.4
-    restart: always
-    ports:
-      - 27017:27017
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: neobank!2025
-    volumes:
-      - ./mongodb-data:/data/db
+      - FINERACT_BASE_URL=${FINERACT_BASE_URL}
+      - FINERACT_TENANT=${FINERACT_TENANT}
+      - FINERACT_USERNAME=${FINERACT_USERNAME}
+      - FINERACT_PASSWORD=${FINERACT_PASSWORD}
