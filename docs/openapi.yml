@@ -1,0 +1,297 @@
+openapi: "3.0.1"
+
+info:
+  title: OpenBank Mobile API
+  version: "v1.0"
+  description: API мобильного банкинга OpenBank
+
+paths:
+  /me/auth:
+    post:
+      summary: Аутентификация клиента
+      tags:
+        - Авторизация
+      operationId: customerSignIn
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone_number
+                - password
+              properties:
+                phone_number:
+                  type: string
+                  example: "79001234567"
+      responses:
+        "200":
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiI..."
+        "401":
+          description: Ошибка аутентификации
+
+  /me/accounts:
+    get:
+      summary: Получение счетов клиента
+      tags:
+        - Счета
+      security:
+        - customerAuth: []
+      responses:
+        "200":
+          description: Список счетов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+        "401":
+          description: Требуется аутентификация
+
+  /me/customers/{phoneNumber}:
+    get:
+      summary: Получение информации о клиенте по номеру телефона
+      tags:
+        - Клиенты
+      security:
+        - customerAuth: []
+      operationId: getCustomerByPhoneNumber
+      parameters:
+        - name: phoneNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Информация о клиенте
+        "404":
+          description: Клиент не найден
+
+  /me/beneficiaries:
+    post:
+      summary: Создание бенефициара
+      tags:
+        - Бенефициары
+      security:
+        - customerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                phone_number:
+                  type: string
+                  example: "79001234567"
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+      responses:
+        "200":
+          description: Бенефициар создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Beneficiary"
+    get:
+      summary: Получение списка бенефициаров
+      tags:
+        - Бенефициары
+      security:
+        - customerAuth: []
+      operationId: getCustomerBeneficiaries
+      responses:
+        "200":
+          description: Список бенефициаров
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Beneficiary"
+
+  /me/beneficiaries/{id}:
+    get:
+      summary: Получение бенефициара по ID
+      tags:
+        - Бенефициары
+      security:
+        - customerAuth: []
+      operationId: getBeneficiaryById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Информация о бенефициаре
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Beneficiary"
+        "404":
+          description: Бенефициар не найден
+
+  /me/transfers:
+    post:
+      summary: Перевод денег
+      tags:
+        - Переводы
+      security:
+        - customerAuth: []
+      operationId: transferMoney
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - from_account_id
+                - to_beneficiary_id
+                - amount
+              properties:
+                from_account_id:
+                  type: integer
+                  example: 1
+                  description: ID счета с которого будут осуществлен перевод
+                to_beneficiary_id:
+                  type: integer
+                  example: 2
+                  description: ID бенефициара, созданного ранее отправителем
+                amount:
+                  type: number
+                  format: decimal
+                  example: 100.50
+                comment:
+                  type: string
+                  example: "Перевод другу"
+      responses:
+        "200":
+          description: Перевод выполнен успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+
+    get:
+      summary: История транзакций по счету
+      tags:
+        - Переводы
+      security:
+        - customerAuth: []
+      operationId: getAccountTransactions
+      responses:
+        "200":
+          description: Список транзакций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+components:
+  securitySchemes:
+    customerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        account_no:
+          type: string
+          example: "ABC0000001"
+        currency:
+          type: string
+          enum: [RUB, USD, EUR]
+        balance:
+          type: object
+          properties:
+            amount:
+              type: number
+              example: 2566.50
+            currency:
+              type: string
+              enum: [RUB, USD, EUR]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    Beneficiary:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        owner_customer_id:
+          type: integer
+          example: 25
+          description: ID владельца бенефициара
+        beneficiary_customer_id:
+          type: integer
+          example: 32
+          description: ID клиента-бенефициара в системе
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone_number:
+          type: string
+          example: 992980666060
+        email:
+          type: string
+          example: customer@me.com
+        created_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ErrSomeRandomError"
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+        amount:
+          type: number
+        from_account_id:
+          type: integer
+        to_account_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        comment:
+          type: string
+        status:
+          type: string
+          enum: [completed, failed]
+        status_reason:
+          type: string
