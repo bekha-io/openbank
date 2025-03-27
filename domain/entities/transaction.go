@@ -16,6 +16,7 @@ const (
 
 type Transaction struct {
 	ID            uint                      `json:"id"`
+	ExternalID    string                    `json:"external_id"`
 	FromAccountId uint                      `json:"from_account_id"`
 	Category      types.TransactionCategory `json:"category"`
 	ToAccountId   uint                      `json:"to_account_id"`

@@ -7,7 +7,6 @@ import (
 	"github.com/bekha-io/openbank/domain/entities"
 	"github.com/bekha-io/openbank/domain/repository"
 	"github.com/bekha-io/openbank/domain/types"
-	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,33 +15,47 @@ import (
 )
 
 type mongoTransaction struct {
-	ID              string               `bson:"id"`
-	AccountID       string               `bson:"account_id"`
-	TransactionType string               `bson:"transaction_type"`
-	Amount          primitive.Decimal128 `bson:"amount"`
-	Currency        string               `bson:"currency"`
-	CreatedAt       time.Time            `bson:"created_at"`
-	Comment         string               `bson:"comment"`
+	ID            uint                 `bson:"id"`
+	ExternalID    string               `bson:"external_id"`
+	FromAccountId uint                 `bson:"from_account_id"`
+	ToAccountId   uint                 `bson:"to_account_id"`
+	Category      string               `bson:"category"`
+	Status        string               `bson:"status"`
+	StatusReason  string               `bson:"status_reason"`
+	Comment       string               `bson:"comment"`
+	Amount        primitive.Decimal128 `bson:"amount"`
+	Currency      string               `bson:"currency"`
+	CreatedAt     time.Time            `bson:"created_at"`
 }
 
-func (c *mongoTransaction) ParseEntity(e *entities.Transaction) {
-	c.ID = e.ID.String()
-	c.Amount, _ = primitive.ParseDecimal128(e.Amount.Amount.StringFixed(2))
-	c.Currency = string(e.Amount.Currency)
-	c.AccountID = string(e.AccountID)
-	c.CreatedAt = e.CreatedAt
-	c.TransactionType = string(e.TransactionType)
-	c.Comment = e.Comment
+func (m *mongoTransaction) ParseEntity(e *entities.Transaction) {
+	m.ID = e.ID
+	m.FromAccountId = e.FromAccountId
+	m.ExternalID = e.ExternalID
+	m.ToAccountId = e.ToAccountId
+	m.Category = string(e.Category)
+	m.Status = string(e.Status)
+	m.StatusReason = e.StatusReason
+	m.Comment = e.Comment
+	m.Amount, _ = primitive.ParseDecimal128(e.Amount.StringFixed(2))
+	m.CreatedAt = e.CreatedAt
+	// если нужна поддержка валют — добавь
 }
 
-func (c *mongoTransaction) ToEntity() *entities.Transaction {
+func (m *mongoTransaction) ToEntity() *entities.Transaction {
+	amount, _ := decimal.NewFromString(m.Amount.String())
+
 	return &entities.Transaction{
-		ID:              types.TransactionID(uuid.MustParse(c.ID)),
-		AccountID:       types.AccountID(c.AccountID),
-		TransactionType: types.TransactionCategory(c.TransactionType),
-		Amount:          types.NewMoney(decimal.RequireFromString(c.Amount.String()), types.Currency(c.Currency)),
-		Comment:         c.Comment,
-		CreatedAt:       c.CreatedAt,
+		ID:            m.ID,
+		ExternalID:    m.ExternalID,
+		FromAccountId: m.FromAccountId,
+		ToAccountId:   m.ToAccountId,
+		Category:      types.TransactionCategory(m.Category),
+		Status:        entities.TransactionStatus(m.Status),
+		StatusReason:  m.StatusReason,
+		Comment:       m.Comment,
+		Amount:        amount,
+		CreatedAt:     m.CreatedAt,
 	}
 }
 
@@ -52,6 +65,48 @@ type MongoTransactionRepository struct {
 	dbName string
 	cl     *mongo.Client
 }
+
+// GetTransactionsByAccountID implements repository.ITransactionRepository.
+func (r *MongoTransactionRepository) GetTransactionsByAccountID(ctx context.Context, id uint) ([]*entities.Transaction, error) {
+	filter := bson.M{
+		"$or": []bson.M{
+			{"from_account_id": id},
+			{"to_account_id": id},
+		},
+	}
+
+	cur, err := r.cl.Database(r.dbName).Collection("transactions").Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	var mongoTransactions []*mongoTransaction
+	if err := cur.All(ctx, &mongoTransactions); err != nil {
+		return nil, err
+	}
+
+	var transactions []*entities.Transaction
+	for _, mt := range mongoTransactions {
+		transactions = append(transactions, mt.ToEntity())
+	}
+	return transactions, nil
+}
+
+// SaveTransaction implements repository.ITransactionRepository.
+func (r *MongoTransactionRepository) SaveTransaction(ctx context.Context, tr *entities.Transaction) error {
+	doc := &mongoTransaction{}
+	doc.ParseEntity(tr)
+
+	_, err := r.cl.Database(r.dbName).Collection("transactions").UpdateOne(
+		ctx,
+		bson.M{"id": doc.ID},
+		bson.D{{Key: "$set", Value: doc}},
+		options.Update().SetUpsert(true),
+	)
+	return err
+}
+
 
 func NewMongoTransactionRepository(cl *mongo.Client, dbName string) *MongoTransactionRepository {
 	return &MongoTransactionRepository{
@@ -72,8 +127,8 @@ func (r *MongoTransactionRepository) GetBy(ctx context.Context, key string, valu
 }
 
 // GetByID implements repository.ITransactionRepository.
-func (r *MongoTransactionRepository) GetByID(ctx context.Context, id types.TransactionID) (*entities.Transaction, error) {
-	return r.GetBy(ctx, "id", id.String())
+func (r *MongoTransactionRepository) GetByID(ctx context.Context, id uint) (*entities.Transaction, error) {
+	return r.GetBy(ctx, "id", id)
 }
 
 // GetManyBy implements repository.ITransactionRepository.

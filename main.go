@@ -5,11 +5,13 @@ import (
 
 	"github.com/bekha-io/openbank/domain/services"
 	"github.com/bekha-io/openbank/infrastructure/fineract"
-	"github.com/bekha-io/openbank/infrastructure/repository/memory"
+	"github.com/bekha-io/openbank/infrastructure/repository/gorm"
 	"github.com/bekha-io/openbank/presentation/rest/me"
 	"github.com/gin-gonic/gin"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/shopspring/decimal"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -45,8 +47,14 @@ func main() {
 		Password:   fineractPassword,
 	}
 
-	beneficiariesMemoryRepo := memory.NewMemoryBeneficiaryRepository()
-	transactionsMemoryRepo := memory.NewMemoryTransactionRepository()
+	db, err := gorm.Open(postgres.Open(os.Getenv("DB_URI")), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	gormRepo.Init(db)
+	beneficiariesMemoryRepo := gormRepo.NewPostgresBenificiaryRepository(db)
+	transactionsMemoryRepo := gormRepo.NewPostgresTransactionRepository(db)
 
 	accountsSvc := services.NewAccountsService(fr, beneficiariesMemoryRepo, transactionsMemoryRepo)
 	individualCustomersSvc := services.NewIndividualCustomerService(fr, beneficiariesMemoryRepo)

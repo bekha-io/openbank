@@ -79,6 +79,7 @@ func (s *AccountsService) Transfer(ctx context.Context, in TransferIn) (*entitie
 		ToAccountId:   primaryAccountId,
 		CreatedAt:     time.Now().UTC(),
 		Comment:       in.Comment,
+		Status:        entities.TransactionStatusCompleted,
 	}
 	if err != nil {
 		tr.Status = entities.TransactionStatusFailed

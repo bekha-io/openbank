@@ -55,12 +55,37 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Account"
+                type: object
+                properties:
+                  accounts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Account"
         "401":
           description: Требуется аутентификация
 
+  /me/accounts/{accountId}/transactions:
+    get:
+      summary: Получение истории транзакций по счету
+      tags:
+        - Счета
+      security:
+        - customerAuth: []
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: История транзакций
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
   /me/customers/{phoneNumber}:
     get:
       summary: Получение информации о клиенте по номеру телефона
@@ -193,23 +218,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Transaction"
-
-    get:
-      summary: История транзакций по счету
-      tags:
-        - Переводы
-      security:
-        - customerAuth: []
-      operationId: getAccountTransactions
-      responses:
-        "200":
-          description: Список транзакций
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Transaction"
 components:
   securitySchemes:
     customerAuth:
