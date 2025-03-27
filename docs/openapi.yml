@@ -5,6 +5,9 @@ info:
   version: "v1.0"
   description: API мобильного банкинга OpenBank
 
+servers:
+  - url: https://neobank.sbs/api
+
 paths:
   /me/auth:
     post:
@@ -281,6 +284,28 @@ components:
           example: 1
         amount:
           type: number
+        category:
+          type: string
+          enum:
+            - deposit
+            - withdrawal
+            - transfer
+            - transport
+            - groceries
+            - entertainment
+            - healthcare
+            - utilities
+            - rent
+            - salary
+            - investment
+            - insurance
+            - dining
+            - education
+            - shopping
+            - tax
+            - charity
+            - travel
+            - fees
         from_account_id:
           type: integer
         to_account_id:

@@ -39,10 +39,10 @@ func (c *mongoTransaction) ToEntity() *entities.Transaction {
 	return &entities.Transaction{
 		ID:              types.TransactionID(uuid.MustParse(c.ID)),
 		AccountID:       types.AccountID(c.AccountID),
-		TransactionType: types.TransactionType(c.TransactionType),
+		TransactionType: types.TransactionCategory(c.TransactionType),
 		Amount:          types.NewMoney(decimal.RequireFromString(c.Amount.String()), types.Currency(c.Currency)),
 		Comment:         c.Comment,
-		CreatedAt: c.CreatedAt,
+		CreatedAt:       c.CreatedAt,
 	}
 }
 

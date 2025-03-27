@@ -8,6 +8,7 @@ import (
 	"github.com/bekha-io/openbank/domain/dto"
 	"github.com/bekha-io/openbank/domain/entities"
 	"github.com/bekha-io/openbank/domain/repository"
+	"github.com/bekha-io/openbank/domain/types"
 	"github.com/bekha-io/openbank/domain/types/errs"
 	"github.com/bekha-io/openbank/infrastructure/fineract"
 	"github.com/shopspring/decimal"
@@ -73,6 +74,7 @@ func (s *AccountsService) Transfer(ctx context.Context, in TransferIn) (*entitie
 	tr := &entities.Transaction{
 		ID:            out.ResourceId,
 		Amount:        in.Amount,
+		Category:      types.TransactionCategoryTransfer,
 		FromAccountId: in.FromAccountId,
 		ToAccountId:   primaryAccountId,
 		CreatedAt:     time.Now().UTC(),

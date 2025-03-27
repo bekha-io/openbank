@@ -64,6 +64,7 @@ func main() {
 	meg.Use(meCtrl.CustomerAuthenticateMiddleware())
 	{
 		meg.GET("/accounts", meCtrl.GetAccounts)
+		meg.GET("/accounts/:id/transactions", meCtrl.GetAccountTransactions)
 		meg.GET("/customers/:phoneNumber", meCtrl.GetCustomerByPhoneNumber)
 
 		bnf := meg.Group("/beneficiaries")
@@ -76,7 +77,6 @@ func main() {
 		transfers := meg.Group("/transfers")
 		{
 			transfers.POST("", meCtrl.TransferMoney)
-			transfers.GET("", meCtrl.GetAccountTransactions)
 		}
 	}
 
