@@ -25,7 +25,7 @@ type IAccountService interface {
 	CreateAccount(ctx context.Context, cmd dto.CreateAccountCommand) error
 	GetAccountByID(ctx context.Context, id uint) (*entities.Account, error)
 	Transfer(ctx context.Context, in TransferIn) (*entities.Transaction, error)
-	GetAccountTransactions(ctx context.Context, id uint) ([]*entities.Transaction, error)
+	GetAccountTransactions(ctx context.Context, in repository.GetTransactionsIn) ([]*entities.Transaction, error)
 }
 
 var _ IAccountService = (*AccountsService)(nil)
@@ -121,8 +121,8 @@ func (s *AccountsService) GetAccountByID(ctx context.Context, id uint) (*entitie
 	return acc.ToEntity(), err
 }
 
-func (s *AccountsService) GetAccountTransactions(ctx context.Context, id uint) ([]*entities.Transaction, error) {
-	transactions, err := s.TransactionsRepo.GetTransactionsByAccountID(ctx, id)
+func (s *AccountsService) GetAccountTransactions(ctx context.Context, in repository.GetTransactionsIn) ([]*entities.Transaction, error) {
+	transactions, err := s.TransactionsRepo.GetTransactions(ctx, in)
 	if err != nil {
 		return nil, err
 	}

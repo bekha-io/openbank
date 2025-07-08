@@ -70,11 +70,19 @@ func (r *GormTransactionRepository) GetByID(ctx context.Context, id uint) (*enti
 	return g.toEntity(), nil
 }
 
-func (r *GormTransactionRepository) GetTransactionsByAccountID(ctx context.Context, id uint) ([]*entities.Transaction, error) {
+func (r *GormTransactionRepository) GetTransactions(ctx context.Context, in repository.GetTransactionsIn) ([]*entities.Transaction, error) {
+	query := r.db.WithContext(ctx).Where("from_account_id = ? OR to_account_id = ?", in.AccountID, in.AccountID)
+
+	// Добавляем фильтры по дате если они указаны
+	if !in.DateFrom.IsZero() {
+		query = query.Where("created_at >= ?", in.DateFrom)
+	}
+	if !in.DateTo.IsZero() {
+		query = query.Where("created_at <= ?", in.DateTo)
+	}
+
 	var list []gormTransaction
-	if err := r.db.WithContext(ctx).
-		Where("from_account_id = ? OR to_account_id = ?", id, id).
-		Find(&list).Error; err != nil {
+	if err := query.Find(&list).Error; err != nil {
 		return nil, err
 	}
 

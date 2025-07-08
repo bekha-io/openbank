@@ -3,7 +3,9 @@ package me
 import (
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/bekha-io/openbank/domain/repository"
 	"github.com/bekha-io/openbank/domain/services"
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -53,7 +55,23 @@ func (ctrl *Controller) GetAccountTransactions(c *gin.Context) {
 		return
 	}
 
-	transactions, err := ctrl.AccountsService.GetAccountTransactions(c, uint(accountId))
+	// Структура для автоматического парсинга query параметров
+	var queryParams struct {
+		DateFrom time.Time `form:"date_from"`
+		DateTo   time.Time `form:"date_to"`
+	}
+
+	// Парсим query параметры
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	transactions, err := ctrl.AccountsService.GetAccountTransactions(c, repository.GetTransactionsIn{
+		AccountID: uint(accountId),
+		DateFrom:  queryParams.DateFrom,
+		DateTo:    queryParams.DateTo,
+	})
 	if err != nil {
 		handleError(c, 400, err)
 		return

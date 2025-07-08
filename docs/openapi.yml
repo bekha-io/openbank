@@ -77,6 +77,18 @@ paths:
           required: true
           schema:
             type: string
+        - name: date_from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
       responses:
         "200":
           description: История транзакций

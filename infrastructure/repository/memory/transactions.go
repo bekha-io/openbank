@@ -35,13 +35,21 @@ func (m *MemoryTransactionRepository) GetByID(ctx context.Context, id uint) (*en
 }
 
 // GetTransactionsByAccountID retrieves transactions by the account ID.
-func (m *MemoryTransactionRepository) GetTransactionsByAccountID(ctx context.Context, accountID uint) ([]*entities.Transaction, error) {
+func (m *MemoryTransactionRepository) GetTransactions(ctx context.Context, in repository.GetTransactionsIn) ([]*entities.Transaction, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
 	var result []*entities.Transaction
 	for _, tr := range m.transactions {
-		if tr.FromAccountId == accountID || tr.ToAccountId == accountID {
+		// Проверяем принадлежность к аккаунту
+		if tr.FromAccountId == in.AccountID || tr.ToAccountId == in.AccountID {
+			// Проверяем фильтры по дате
+			if !in.DateFrom.IsZero() && tr.CreatedAt.Before(in.DateFrom) {
+				continue
+			}
+			if !in.DateTo.IsZero() && tr.CreatedAt.After(in.DateTo) {
+				continue
+			}
 			result = append(result, tr)
 		}
 	}
